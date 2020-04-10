@@ -1,0 +1,8 @@
+/bin
+/ojb
+appsettings.json
+appsettings_deploy.json
+appsettings.Development.json
+/publish
+obj/Debug/netcoreapp3.1/RestApi.csprojAssemblyReference.cache
+.vscode/settings.json
