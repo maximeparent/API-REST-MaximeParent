@@ -8412,11 +8412,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/mnt/c/users/kingk/desktop/Week_9_ApiRest/Rocket_Elevators_RestAPI/RestApi.csproj",
+      "projectUniqueName": "/mnt/c/users/kingk/desktop/Week_9_API-REST/API-REST-MaximeParent/RestApi.csproj",
       "projectName": "RestApi",
-      "projectPath": "/mnt/c/users/kingk/desktop/Week_9_ApiRest/Rocket_Elevators_RestAPI/RestApi.csproj",
+      "projectPath": "/mnt/c/users/kingk/desktop/Week_9_API-REST/API-REST-MaximeParent/RestApi.csproj",
       "packagesPath": "/home/maxparent/.nuget/packages/",
-      "outputPath": "/mnt/c/users/kingk/desktop/Week_9_ApiRest/Rocket_Elevators_RestAPI/obj/",
+      "outputPath": "/mnt/c/users/kingk/desktop/Week_9_API-REST/API-REST-MaximeParent/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/maxparent/.nuget/NuGet/NuGet.Config"

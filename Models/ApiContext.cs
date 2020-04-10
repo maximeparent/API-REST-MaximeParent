@@ -32,6 +32,10 @@ namespace RestApi.Models
                 .HasOne(p => p.columns)
                 .WithMany(b => b.elevators)
                 .HasForeignKey(p => p.column_id);
+
+            modelBuilder.Entity<Intervention>(entity => {
+                entity.ToTable("interventions");
+            }); 
         }
 
         public DbSet<Building> buildings { get; set; }
