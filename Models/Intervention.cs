@@ -10,7 +10,6 @@ using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 public class Intervention
 {
     public long id { get; set; }
-    public long author_id { get; set; }
     public long customer_id { get; set; }
     public long building_id { get; set; }
     public long battery_id { get; set; }
