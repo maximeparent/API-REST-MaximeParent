@@ -1,12 +1,9 @@
-// Unused usings removed
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using RestApi.Models;
 
 namespace RestApi
@@ -20,19 +17,18 @@ namespace RestApi
 
         public IConfiguration Configuration { get; }
 
+        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
-        {
-        services.AddCors();
+            {
+                services.AddCors(); //Test local without problems
 
-        services.AddControllers().AddNewtonsoftJson(options =>
-            options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
-        );
+                services.AddDbContext<DatabaseContext>(options =>
+                    options.UseMySql(Configuration.GetConnectionString("DefaultConnection")));
 
-        services.AddDbContext<ApiContext>(options =>
-        options.UseMySql(Configuration.GetConnectionString("DefaultConnection")));
-        services.AddMvc();
-        }
-        
+                services.AddMvc();
+            }
+
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -50,6 +46,11 @@ namespace RestApi
             {
                 endpoints.MapControllers();
             });
+
+            
         }
     }
 }
+
+
+

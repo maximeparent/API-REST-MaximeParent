@@ -5,92 +5,141 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using RestApi.Models;
+using Newtonsoft.Json.Linq;
 
 namespace RestApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/batteries")]
     [ApiController]
     public class BatteriesController : ControllerBase
     {
-        private readonly ApiContext _context;
-        public BatteriesController(ApiContext context)
+        private readonly DatabaseContext _context;
+
+        public BatteriesController(DatabaseContext context)
         {
             _context = context;
         }
 
-        // GET: api/batteries
+        // GET: api/Batteries
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Battery>>> Getbatteries()
+        public async Task<ActionResult<IEnumerable<Batteries>>> GetBatteries()
         {
-            return await _context.batteries.ToListAsync();
+            return await _context.Batteries.ToListAsync();
         }
 
-        // GET: api/batteries/1
+        // GET: api/Batteries/5
+
+
+ //https://stackoverflow.com/questions/16507222/create-json-object-dynamically-via-javascript-without-concate-strings
+ 
+//  return this.Content(returntext, "application/json");
+
         [HttpGet("{id}")]
-        public async Task<ActionResult<Battery>> Getbatteries(long id)
+        public async Task<ActionResult<Batteries>> GetBatteries(long id, string Status)
         {
-            var batteries = await _context.batteries.FindAsync(id);
+            var batteries = await _context.Batteries.FindAsync(id);
+
             if (batteries == null)
             {
                 return NotFound();
             }
-            return batteries;
+
+            var jsonGet = new JObject ();
+            jsonGet["status"] = batteries.status;
+            return Content  (jsonGet.ToString(), "application/json");
         }
 
-        // PUT: api/batteries/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Putbatteries(long id, Battery batteries)
+        // PUT: api/Batteries/5
+        // To protect from overposting attacks, please enable the specific properties you want to bind to, for
+        // more details see https://aka.ms/RazorPagesCRUD.
+        // [HttpPut("{id}")]
+        // public async Task<IActionResult> PutBatteries(long id, Batteries batteries)
+        // {
+        //     if (id != batteries.id)
+        //     {
+        //         return BadRequest();
+        //     }
+
+        //     _context.Entry(batteries).State = EntityState.Modified;
+
+        //     try
+        //     {
+        //         await _context.SaveChangesAsync();
+        //     }
+        //     catch (DbUpdateConcurrencyException)
+        //     {
+        //         if (!BatteriesExists(id))
+        //         {
+        //             return NotFound();
+        //         }
+        //         else
+        //         {
+        //             throw;
+        //         }
+        //     }
+            
+        //     var jsonPut = new JObject ();
+        //     jsonPut["Update"] = "Update done to batteries id : " + id;
+        //     return Content  (jsonPut.ToString(), "application/json");
+
+        // }
+
+
+
+   [HttpPut("{id}")]
+        public IActionResult PutBatteryStatus(long id, Batteries item)
         {
-            if (id != batteries.id)
+            var bat = _context.Batteries.Find(id); 
+            if (bat == null)
             {
-                return BadRequest();
+                return NotFound();
             }
-            _context.Entry(batteries).State = EntityState.Modified;
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!batteriesExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return NoContent();
-        }
+            bat.status = item.status;
+
+            _context.Batteries.Update(bat);
+            _context.SaveChanges();
+    
+            var jsonPut = new JObject ();
+            jsonPut["Update"] = "Update done to battery id : " + id + " to the status : " + bat.status;
+            return Content  (jsonPut.ToString(), "application/json");
         
-        // POST: api/batteries
-        [HttpPost]
-        public async Task<ActionResult<Battery>> Postbatteries(Battery batteries)
-        {
-            _context.batteries.Add(batteries);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(Getbatteries), new { id = batteries.id }, batteries);
         }
 
-        // DELETE: api/batteries/1
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<Battery>> Deletebatteries(long id)
+
+
+
+        // POST: api/Batteries
+        // To protect from overposting attacks, please enable the specific properties you want to bind to, for
+        // more details see https://aka.ms/RazorPagesCRUD.
+        [HttpPost]
+        public async Task<ActionResult<Batteries>> PostBatteries(Batteries batteries)
         {
-            var batteries = await _context.batteries.FindAsync(id);
+            _context.Batteries.Add(batteries);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetBatteries", new { id = batteries.id }, batteries);
+        }
+
+        // DELETE: api/Batteries/5
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<Batteries>> DeleteBatteries(long id)
+        {
+            var batteries = await _context.Batteries.FindAsync(id);
             if (batteries == null)
             {
                 return NotFound();
             }
-            _context.batteries.Remove(batteries);
+
+            _context.Batteries.Remove(batteries);
             await _context.SaveChangesAsync();
+
             return batteries;
         }
-        private bool batteriesExists(long id)
+
+        private bool BatteriesExists(long id)
         {
-            return _context.batteries.Any(e => e.id == id);
+            return _context.Batteries.Any(e => e.id == id);
         }
     }
 }
