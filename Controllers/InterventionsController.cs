@@ -5,96 +5,168 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using RestApi.Models;
+using Newtonsoft.Json.Linq;
 
 namespace RestApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/interventions")]
     [ApiController]
     public class InterventionsController : ControllerBase
     {
-        private readonly ApiContext _context;
-        public InterventionsController(ApiContext context)
+        private readonly DatabaseContext _context;
+
+        public InterventionsController(DatabaseContext context)
         {
             _context = context;
         }
-        // GET: api/interventions
+
+
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Intervention>>> Getinterventions()
+        public async Task<ActionResult<IEnumerable<Interventions>>> GetInterventions()
         {
-            return await _context.interventions.ToListAsync();
+            return await _context.Interventions.ToListAsync();
         }
 
-        // GET: api/interventions/pending
-        [HttpGet("pending")]
-        public List<Intervention> GetStatus()
-        {
-            return _context.interventions.Where(i => i.status == "Pending" && i.start_date == null).ToList();
-        }
 
-        // GET: api/interventions/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Intervention>> Getinterventions(long id)
+        public async Task<ActionResult<Interventions>> GetInterventions(long id, string Status)
         {
-            var interventions = await _context.interventions.FindAsync(id);
-            if (interventions == null)
+            var Interventions = await _context.Interventions.FindAsync(id);
+
+            if (Interventions == null)
             {
                 return NotFound();
             }
-            return interventions;
+
+            var jsonGet = new JObject ();
+            jsonGet["status"] = Interventions.status;
+            return Content  (jsonGet.ToString(), "application/json");
         }
-        // PUT: api/interventions/5
+
+
+
+
+
         [HttpPut("{id}")]
-        public async Task<IActionResult> Putinterventions(long id, Intervention interventions)
+        public IActionResult PutInterventionstatus(long id, Interventions item)
         {
-            if (id != interventions.id)
+            var col = _context.Interventions.Find(id); 
+            if (col == null)
             {
-                return BadRequest();
+                return NotFound();
             }
-            _context.Entry(interventions).State = EntityState.Modified;
-            try
+            col.status = item.status;
+
+            _context.Interventions.Update(col);
+            _context.SaveChanges();
+
+            var jsonPut = new JObject ();
+            jsonPut["Update"] = "Update done to Interventions id : " + id + " to the status : " + col.status;
+            return Content  (jsonPut.ToString(), "application/json");
+        
+        }
+
+
+        [HttpPost]
+        public async Task<ActionResult<Interventions>> PostInterventions(Interventions Interventions)
+        {
+            _context.Interventions.Add(Interventions);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetInterventions", new { id = Interventions.id }, Interventions);
+        }
+
+        // DELETE: api/Interventions/5
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<Interventions>> DeleteInterventions(long id)
+        {
+            var Interventions = await _context.Interventions.FindAsync(id);
+            if (Interventions == null)
             {
-                await _context.SaveChangesAsync();
+                return NotFound();
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!interventionsExists(id))
-                {
+
+            _context.Interventions.Remove(Interventions);
+            await _context.SaveChangesAsync();
+
+            return Interventions;
+        }
+
+        private bool InterventionsExists(long id)
+        {
+            return _context.Interventions.Any(e => e.id == id);
+        }
+    
+
+
+
+
+
+
+
+
+
+            // api/interventions/pending
+            [HttpGet("pending")]
+            public async Task<ActionResult<List<Interventions>>> GetInterventionPendingList() {
+                
+                var list =  await _context.Interventions.ToListAsync();
+
+                if (list == null) {
                     return NotFound();
                 }
-                else
-                {
-                    throw;
+
+                List<Interventions> listIntervention = new List<Interventions>();
+
+                foreach (var intervention in list) {
+                    if (intervention.status == "Pending" || intervention.start_date_time_intervention == null ) {
+                        listIntervention.Add(intervention);
+                    }
                 }
+                return listIntervention;
             }
-            return NoContent();
-        }
-        // POST: api/interventions
-        [HttpPost]
-        public async Task<ActionResult<Intervention>> Postinterventions(Intervention interventions)
-        {
-            _context.interventions.Add(interventions);
-            await _context.SaveChangesAsync();
-            //return CreatedAtAction("Getinterventions", new { id = interventions.Id }, interventions);
-            return CreatedAtAction(nameof(Getinterventions), new { id = interventions.id }, interventions);
-        }
-        // DELETE: api/interventions/5
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<Intervention>> Deleteinterventions(long id)
-        {
-            var interventions = await _context.interventions.FindAsync(id);
-            if (interventions == null)
-            {
-                return NotFound();
+
+            // api/interventions/inProgress/id
+            [HttpPut("inProgress/{id}")]
+            public IActionResult putInterventionStatusInProgress(long id, Interventions item) {
+                
+                var col = _context.Interventions.Find(keyValues: id); 
+                
+                if (col == null) {
+                    return NotFound();
+                }
+
+                col.status = item.status;
+                col.start_date_time_intervention = item.start_date_time_intervention;
+
+                _context.Interventions.Update(col);
+                _context.SaveChanges();
+
+                var jsonPut = new JObject ();
+                jsonPut["Update"] = "Update done to Interventions id : " + id + " to the status : " + col.status + "start at" + col.start_date_time_intervention;
+                return Content  (jsonPut.ToString(), "application/json");
             }
-            _context.interventions.Remove(interventions);
-            await _context.SaveChangesAsync();
-            return interventions;
-        }
-        private bool interventionsExists(long id)
-        {
-            return _context.interventions.Any(e => e.id == id);
-        }
+
+            // api/interventions/completed/id
+            [HttpPut("completed/{id}")]
+            public IActionResult putInterventionStatusCompleted(long id, Interventions item) {
+                
+                var col = _context.Interventions.Find(id); 
+                
+                if (col == null) {
+                    return NotFound();
+                }
+
+                col.status = item.status;
+                col.end_date_time_intervention = item.end_date_time_intervention;
+
+                _context.Interventions.Update(col);
+                _context.SaveChanges();
+
+                var jsonPut = new JObject ();
+                jsonPut["Update"] = "Update done to Interventions id : " + id + " to the status : " + col.status + "start at" + col.end_date_time_intervention;
+                return Content  (jsonPut.ToString(), "application/json");
+            }
     }
 }

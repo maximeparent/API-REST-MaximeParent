@@ -1,74 +1,85 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
 using Microsoft.EntityFrameworkCore;
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using RestApi.Models;
+using Newtonsoft.Json.Linq;
+using MySql.Data;
+using MySql.Data.MySqlClient;
+using System.Data;
 
 namespace RestApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/buildings")]
     [ApiController]
     public class BuildingsController : ControllerBase
     {
-        private readonly ApiContext _context;
-        public BuildingsController(ApiContext context)
+        private readonly DatabaseContext _context;
+
+        public BuildingsController(DatabaseContext context)
         {
             _context = context;
         }
 
-        // GET: api/buildings
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Building>>> Getbuildings()
+
+
+    [HttpGet("intervention")]
+
+    public  ActionResult<List<Buildings>> GetBuildingsWithProblems()
         {
-            return await _context.buildings.ToListAsync();
+
+        IQueryable<Buildings>  Building = 
+
+        from bui in _context.Buildings
+        join bat in _context.Batteries on bui.id equals bat.building_id
+        join col in _context.Columns on bat.id equals col.battery_id
+        join ele in _context.Elevators on col.id equals ele.column_id
+
+        where bat.status == "Intervention" || col.status == "Intervention" || ele.status == "Intervention" // va tu les ajouter 3 fois sans specifier si col, ele ou bat ?
+        select bui;
+        
+      
+        return Building.ToList();
+
         }
 
-        // GET: api/buildings/unavailable
-        [HttpGet("intervention")]
-        public List<Building> Getintervention(string status)
-        {
-            var elevatorz = _context.buildings.Where(a => a.batteries.SelectMany(b => b.columns).SelectMany(c => c.elevators).Any(c => c.status == "Intervention")).ToList();
-            var columnz = _context.buildings.Where(a => a.batteries.SelectMany(b => b.columns).Any(b => b.status == "Intervention")).ToList();
-            var batteryz = _context.buildings.Where(a => a.batteries.Any(a => a.status == "Intervention")).ToList();
-            var intervention = elevatorz.Union(columnz).Union(batteryz).OrderBy(building => building.id).ToList();
 
-            return intervention;
-        }
-
-        // GET: api/buildings/1
         [HttpGet("{id}")]
-        public async Task<ActionResult<Building>> Getbuildings(long id)
+        public async Task<ActionResult<Buildings>> GetBuildings(long id, string Status)
         {
-            var buildings = await _context.buildings.FindAsync(id);
-            if (buildings == null)
+            var Buildings = await _context.Buildings.FindAsync(id);
+
+            if (Buildings == null)
             {
                 return NotFound();
             }
-            return buildings;
+
+    
+            return Buildings;
+        
         }
 
-        // PUT: api/buildings/1
+      
         [HttpPut("{id}")]
-        public async Task<IActionResult> Putbuildings(long id, Building buildings)
+        public async Task<IActionResult> PutBuildings(long id, Buildings Buildings)
         {
-            if (id != buildings.id)
+            if (id != Buildings.id)
             {
                 return BadRequest();
             }
-            _context.Entry(buildings).State = EntityState.Modified;
+
+            _context.Entry(Buildings).State = EntityState.Modified;
+
             try
             {
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!buildingsExists(id))
+                if (!BuildingsExists(id))
                 {
                     return NotFound();
                 }
@@ -77,34 +88,42 @@ namespace RestApi.Controllers
                     throw;
                 }
             }
-            return NoContent();
-        }
-        
-        // POST: api/buildings
-        [HttpPost]
-        public async Task<ActionResult<Building>> Postbuildings(Building buildings)
-        {
-            _context.buildings.Add(buildings);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(Getbuildings), new { id = buildings.id }, buildings);
+            
+            var jsonPut = new JObject ();
+            jsonPut["Update"] = "Update done to Buildings id : " + id;
+            return Content  (jsonPut.ToString(), "application/json");
+
         }
 
-        // DELETE: api/buildings/1
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<Building>> Deletebuildings(long id)
+ 
+        [HttpPost]
+        public async Task<ActionResult<Buildings>> PostBuildings(Buildings Buildings)
         {
-            var buildings = await _context.buildings.FindAsync(id);
-            if (buildings == null)
+            _context.Buildings.Add(Buildings);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetBuildings", new { id = Buildings.id }, Buildings);
+        }
+
+    
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<Buildings>> DeleteBuildings(long id)
+        {
+            var Buildings = await _context.Buildings.FindAsync(id);
+            if (Buildings == null)
             {
                 return NotFound();
             }
-            _context.buildings.Remove(buildings);
+
+            _context.Buildings.Remove(Buildings);
             await _context.SaveChangesAsync();
-            return buildings;
+
+            return Buildings;
         }
-        private bool buildingsExists(long id)
+
+        private bool BuildingsExists(long id)
         {
-            return _context.buildings.Any(e => e.id == id);
+            return _context.Buildings.Any(e => e.id == id);
         }
     }
 }
